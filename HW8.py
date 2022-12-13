@@ -15,22 +15,37 @@ def get_restaurant_data(db_filename):
     conn = sqlite3.connect(path+'/'+db_filename)
     cur = conn.cursor()
 
-    cur.execute('SELECT restaurants.name, categories.category, buildings.building, restaurants.rating FROM restaurants JOIN buildings ON restaurants.id = buildings.id JOIN categories ON restaurants.id = categories.id')
+    cur.execute('SELECT name, rating, category_id, building_id FROM restaurants')
     fulltable = cur.fetchall()
+    cur.execute('SELECT category, id FROM categories')
+    categorygroup = cur.fetchall()
+    cur.execute('SELECT building, id FROM buildings')
+    buildingsgroup = cur.fetchall()
     conn.commit()
-    #print(fulltable)
 
     
     restaurant_dictionary_list = []
+    counter = 0
     for the_tuple in fulltable:
         new_dict = {}
         new_dict['name'] = the_tuple[0]
-        new_dict['category'] = the_tuple[1]
-        new_dict['building'] = the_tuple[2]
-        new_dict['rating'] = the_tuple[3]
+        new_dict['category'] = the_tuple[2]
+        new_dict['building'] = the_tuple[3]
+        new_dict['rating'] = the_tuple[1]
         restaurant_dictionary_list.append(new_dict)
     
-    #print(restaurant_dictionary_list)
+    for dictionary in restaurant_dictionary_list:
+        category_number = dictionary.get('category')
+        for category in categorygroup:
+            if category[1] == category_number:
+                dictionary['category'] = category[0]
+
+    for dictionary in restaurant_dictionary_list:
+        building_number = dictionary.get('building')
+        for building in buildingsgroup:
+            if building[1] == building_number:
+                dictionary['building'] = building[0]
+
     return restaurant_dictionary_list
         
 
@@ -50,11 +65,30 @@ def barchart_restaurant_categories(db_filename):
     cur.execute('SELECT category_id, COUNT(*) as COUNT FROM restaurants GROUP BY CATEGORY_ID')
     number = cur.fetchall()
     conn.commit()
-    print(number)
-    print(categories)
 
+    restaurant_categories_dictionary = {}
+    counter = 0
+    for category in categories:
+        restaurant_categories_dictionary[category[0]] = number[counter][1]
+        counter += 1
 
+    sorted_restaurant_categories_dictionary= dict(sorted(restaurant_categories_dictionary.items()))
+    descending_restaurant_categories_dictionary = dict(sorted(restaurant_categories_dictionary.items(),
+                           key=lambda item: item[1],
+                           reverse=False))
     
+    #creating bar chart
+    restaurants = list(descending_restaurant_categories_dictionary.keys())
+    count = list(descending_restaurant_categories_dictionary.values())
+
+    plt.barh(restaurants, count, color=['darkred', 'darkmagenta', 'darkslategray', 'darkgoldenrod', 'darkblue', 'darkslateblue', 'darkcyan', 'darkorange', 'darkgrey', 'darkturquoise'])
+    plt.title('Number of Restaurants on South University of Each Category')
+    plt.xlabel('Number of Restaurants')
+    plt.ylabel('Restaurant Categories')
+    plt.tight_layout()
+    plt.show()
+
+    return sorted_restaurant_categories_dictionary
 
 #EXTRA CREDIT
 def highest_rated_category(db_filename):#Do this through DB as well
@@ -116,4 +150,4 @@ class TestHW8(unittest.TestCase):
 
 if __name__ == '__main__':
     main()
-    #unittest.main(verbosity=2)
+    unittest.main(verbosity=2)
