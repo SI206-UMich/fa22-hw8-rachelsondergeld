@@ -1,3 +1,5 @@
+#Rachel Sondergeld rsond@umich.edu
+
 import matplotlib.pyplot as plt
 import os
 import sqlite3
@@ -9,7 +11,28 @@ def get_restaurant_data(db_filename):
     dictionaries. The key:value pairs should be the name, category, building, and rating
     of each restaurant in the database.
     """
-    pass
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path+'/'+db_filename)
+    cur = conn.cursor()
+
+    cur.execute('SELECT restaurants.name, categories.category, buildings.building, restaurants.rating FROM restaurants JOIN buildings ON restaurants.id = buildings.id JOIN categories ON restaurants.id = categories.id')
+    fulltable = cur.fetchall()
+    conn.commit()
+    #print(fulltable)
+
+    
+    restaurant_dictionary_list = []
+    for the_tuple in fulltable:
+        new_dict = {}
+        new_dict['name'] = the_tuple[0]
+        new_dict['category'] = the_tuple[1]
+        new_dict['building'] = the_tuple[2]
+        new_dict['rating'] = the_tuple[3]
+        restaurant_dictionary_list.append(new_dict)
+    
+    #print(restaurant_dictionary_list)
+    return restaurant_dictionary_list
+        
 
 def barchart_restaurant_categories(db_filename):
     """
@@ -31,7 +54,7 @@ def highest_rated_category(db_filename):#Do this through DB as well
 
 #Try calling your functions here
 def main():
-    pass
+    get_restaurant_data('South_U_Restaurants.db')
 
 class TestHW8(unittest.TestCase):
     def setUp(self):
@@ -78,4 +101,4 @@ class TestHW8(unittest.TestCase):
 
 if __name__ == '__main__':
     main()
-    unittest.main(verbosity=2)
+    #unittest.main(verbosity=2)
